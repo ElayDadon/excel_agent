@@ -1,6 +1,6 @@
 # agent_logic.py
-from google import genai
-from google.genai import types
+import google.generativeai as genai
+from google.generativeai import types
 import pandas as pd
 
 def create_gemini_client(api_key):
