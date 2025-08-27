@@ -4,6 +4,7 @@ from google.generativeai import types
 import pandas as pd
 
 def create_gemini_client(api_key):
+    """יוצר ומחזיר אובייקט Client של Gemini."""
     try:
         client = genai.Client(api_key=api_key)
         return client
@@ -12,16 +13,13 @@ def create_gemini_client(api_key):
         return None
 
 def get_response_from_gemini(client, dataframe, query, chat_history):
+    """שולח בקשה ל-Gemini באמצעות אובייקט ה-Client."""
     if not client:
         return "Error: Gemini client is not initialized."
-    
-    # --- Using the correct and available model ---
-    model = "gemini-2.0-flash"
-    
+
+    model = "gemini-1.5-flash-latest"
     df_columns = dataframe.columns.tolist()
-    
-    # --- The new and improved prompt ---
-    prompt_text = f'''
+    prompt_text = f"""
     You are a world-class, friendly, and conversational data analyst AI.
     Your main goal is to help a user understand their data by answering questions in natural Hebrew.
     You specialize in Python with pandas and Plotly.
@@ -32,23 +30,18 @@ def get_response_from_gemini(client, dataframe, query, chat_history):
     - The recent conversation history is: {chat_history}
 
     **YOUR CORE PRINCIPLES:**
-    1.  **Be Conversational and Proactive:** When first asked "what is in the file" (e.g., "מה יש בקובץ"), provide a comprehensive text-only overview. This overview should include:
-        - A brief summary of the data's purpose.
-        - The number of rows and columns (from `df.shape`).
-        - A list of all column names.
-        - A suggestion for next steps, like "I can provide a statistical summary, show the first few rows, or create a graph. What would you like to do?".
-        - **Do not generate code for this initial overview.**
-    2.  **Understand User Intent & Handle Typos:** Your top priority is to understand what the user *means*, not just what they typed.
-        - **Crucial Example:** If the user asks "מה יש בקבוץ", you MUST interpret it as a typo for "מה יש בקובץ" (what is in the file) and provide the initial overview. Do NOT assume they mean "group".
-    3.  **Use Conversational History:** Look at the `chat_history`. If you just provided a statistical summary and the user asks for it again, gently point it out and ask if they want something different.
-    4.  **Handle Ambiguity:** If a query is vague like "תספק לי" (Provide me), use the immediate preceding context. If your last message offered a statistical summary, it's logical to assume that's what the user wants. Generate the code for `df.describe()`.
+    1.  **Be Conversational and Proactive:** When first asked "what is in the file" (e.g., "מה יש בקובץ"), provide a comprehensive text-only overview.
+    2.  **Understand User Intent & Handle Typos:** Your top priority is to understand what the user *means*, not just what they typed. (e.g., "קבוץ" -> "קובץ").
+    3.  **Handle Ambiguity:** If a query is vague like "תספק לי", use the immediate preceding context.
 
     **RESPONSE FORMATTING (Strictly follow this):**
     - To generate pandas code for data/analysis, wrap it in ```python\\n[CODE]\\n...```
     - To generate Plotly code for a graph, wrap it in ```python\\n[PLOT]\\n...```
-    - For conversational text answers (like the initial overview), respond directly without any wrappers.
-    '''
+    - For conversational text answers, respond directly without any wrappers.
+    """
+
     contents = [types.Content(role="user", parts=[types.Part.from_text(text=prompt_text)])]
+
     try:
         response = client.models.generate_content(model=f"models/{model}", contents=contents)
         return response.text
@@ -56,6 +49,7 @@ def get_response_from_gemini(client, dataframe, query, chat_history):
         return f"Error communicating with Gemini: {e}"
 
 def execute_code(dataframe, gemini_response):
+    """מריץ את הקוד שהתקבל באופן בטוח."""
     response_text = gemini_response.strip().replace("`", "")
     if "python\\n[CODE]" in response_text:
         code_to_run = response_text.split("python\\n[CODE]")[1].strip()

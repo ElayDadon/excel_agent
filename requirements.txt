@@ -1,5 +1,5 @@
-nstreamlit
-npandas
-nopenpyxl
-ngoogle-generativeai
-nplotly
+streamlit
+pandas
+openpyxl
+google-generativeai
+plotly
