@@ -4,13 +4,18 @@ from google.generativeai import types
 import pandas as pd
 
 def create_gemini_client(api_key):
-    """יוצר ומחזיר אובייקט Client של Gemini."""
+    """
+    יוצר אובייקט Client של Gemini.
+    במקרה של הצלחה, מחזיר (client, None).
+    במקרה של כישלון, מחזיר (None, error_message_string).
+    """
     try:
         client = genai.Client(api_key=api_key)
-        return client
+        return client, None
     except Exception as e:
-        print(f"Error creating Gemini client: {e}")
-        return None
+        # המר את אובייקט השגיאה למחרוזת טקסט ברורה
+        error_message = str(e)
+        return None, error_message
 
 def get_response_from_gemini(client, dataframe, query, chat_history):
     """שולח בקשה ל-Gemini באמצעות אובייקט ה-Client."""
